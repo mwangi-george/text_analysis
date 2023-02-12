@@ -1,0 +1,74 @@
+---
+title: "Text Analysis: Topic modeling"
+description: A simple analysis for skills test
+date: last-modified
+author: 
+  - name: Mwangi George
+    url: https://twitter.com/mwangi__george
+    affiliation: College of Economics and Business, Kenyatta University
+    affiliation-url: https://github.com/mwangi-george
+title-block-banner: true
+format: 
+  html: 
+    toc: true
+    number-sections: true
+    df-print: kable
+editor: visual
+---
+
+## Preliminary tasks
+
+```{r}
+# loading necessary packages
+pacman::p_load(
+  tidyverse, tidytext, topicmodels, janitor
+)
+
+# reading in the data
+reviews <- read_csv(
+  file = "data/reviews.csv",
+  show_col_types = F
+  ) %>% 
+  # clean variables names
+  clean_names() %>% 
+  # select variables of interest and rename them according
+  select(
+    user_name, 
+    review_message = content, 
+    rating = score, 
+    thumbs_up_count, 
+    created_at = at
+  )
+
+# tokenize review message
+reviews %>% 
+  # store output in word variable
+  unnest_tokens(
+    output = word, 
+    input = review_message
+    ) %>% 
+  # remove stop words
+  anti_join(stop_words, by = "word") %>% 
+  # filter obvious words in the word column
+  filter(
+    !word == "app",
+    # also remove rows with numbers
+    !str_detect(word, "[0-9]")
+    ) -> 
+  # assign to tidy_reviews
+  tidy_reviews
+
+tidy_reviews %>% 
+  count(word, sort = T) %>% 
+  head(n = 10) %>% 
+  ggplot(aes(fct_reorder(word, n), n, fill = word))+
+  geom_col(show.legend = F)+
+  coord_flip()+
+  labs(
+    title = "Most common words in the review messages",
+    x = "Word",
+    y = "counts"
+  )
+```
+
+## Introduction to Topic Modeling
