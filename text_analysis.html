@@ -155,6 +155,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <ul>
   <li><a href="#preliminary-tasks" id="toc-preliminary-tasks" class="nav-link active" data-scroll-target="#preliminary-tasks"><span class="toc-section-number">1</span>  Preliminary tasks</a></li>
   <li><a href="#introduction-to-topic-modeling" id="toc-introduction-to-topic-modeling" class="nav-link" data-scroll-target="#introduction-to-topic-modeling"><span class="toc-section-number">2</span>  Introduction to Topic Modeling</a></li>
+  <li><a href="#word-probabilities" id="toc-word-probabilities" class="nav-link" data-scroll-target="#word-probabilities"><span class="toc-section-number">3</span>  Word Probabilities</a></li>
+  <li><a href="#topic-modeling-vs-clustering" id="toc-topic-modeling-vs-clustering" class="nav-link" data-scroll-target="#topic-modeling-vs-clustering"><span class="toc-section-number">4</span>  Topic Modeling vs Clustering</a></li>
+  <li><a href="#document-term-matrices" id="toc-document-term-matrices" class="nav-link" data-scroll-target="#document-term-matrices"><span class="toc-section-number">5</span>  Document Term Matrices</a>
+  <ul class="collapse">
+  <li><a href="#creating-a-dtm" id="toc-creating-a-dtm" class="nav-link" data-scroll-target="#creating-a-dtm"><span class="toc-section-number">5.1</span>  Creating a DTM</a></li>
+  </ul></li>
+  <li><a href="#running-a-topic-model" id="toc-running-a-topic-model" class="nav-link" data-scroll-target="#running-a-topic-model"><span class="toc-section-number">6</span>  Running a Topic Model</a></li>
+  <li><a href="#interpreting-topics" id="toc-interpreting-topics" class="nav-link" data-scroll-target="#interpreting-topics"><span class="toc-section-number">7</span>  Interpreting Topics</a></li>
   </ul>
 </nav>
 </div>
@@ -201,21 +209,23 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>word <span class="sc">==</span> <span class="st">"app"</span>,</span>
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># also remove rows with numbers</span></span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">str_detect</span>(word, <span class="st">"[0-9]"</span>)</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    ) <span class="ot">-&gt;</span> </span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># assign to tidy_reviews</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>  tidy_reviews</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>tidy_reviews <span class="sc">%&gt;%</span> </span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(word, <span class="at">sort =</span> T) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="at">n =</span> <span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="fu">fct_reorder</span>(word, n), n, <span class="at">fill =</span> word))<span class="sc">+</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>()<span class="sc">+</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Most common words in the review messages"</span>,</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Word"</span>,</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"counts"</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># create a review id column</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowid_to_column</span>() <span class="ot">-&gt;</span> </span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  <span class="co"># assign to tidy_reviews</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>  tidy_reviews</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>tidy_reviews <span class="sc">%&gt;%</span> </span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(word, <span class="at">sort =</span> T) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="at">n =</span> <span class="dv">10</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="fu">fct_reorder</span>(word, n), n, <span class="at">fill =</span> word))<span class="sc">+</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>()<span class="sc">+</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Most common words in the review messages"</span>,</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Word"</span>,</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"counts"</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="text_analysis_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -223,6 +233,311 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="introduction-to-topic-modeling" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="introduction-to-topic-modeling"><span class="header-section-number">2</span> Introduction to Topic Modeling</h2>
+<p>In this section, we will move beyond word counts to uncover the underlying topics in a collection of documents. We will apply the <strong>Latent Dirichlet Allocation (LDA)</strong>, which is standard topic model that searches for patterns words occurring together within and across a collection of documents, also known as a corpus.</p>
+<p>LDA finds topics in a corpus by creating a separate bag for each document and dumping the words out to look for patterns in which words appear together - - not just in one bag but consistently across all the document-specific bags in the corpus.</p>
+<div class="callout-note callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Note that LDA is not trying to explain or predict any dependent variable, like in a regression. Rather it is simply looking for patterns within a group of explanatory variables. This pattern search is known as <strong>Unsupervised Learning</strong>.</p>
+</div>
+</div>
+</section>
+<section id="word-probabilities" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="word-probabilities"><span class="header-section-number">3</span> Word Probabilities</h2>
+<p>The topics themselves are a list of all the words in a corpus, often called a dictionary, with probabilities of the words appearing within each topic.</p>
+<p>Words that appear often together will have high probabilities of occurring in one or more topics.</p>
+</section>
+<section id="topic-modeling-vs-clustering" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="topic-modeling-vs-clustering"><span class="header-section-number">4</span> Topic Modeling vs Clustering</h2>
+<p>Because topic modeling is a type of unsupervised learning, it naturally draws comparisons from other unsupervised techniques. In particular, topic modeling is often compared to clustering, which is common in market segmentation, and other applications. It is, therefore, worth taking a moment to distinguish between these techniques.</p>
+<p>On one hand, common clustering techniques like k-means and hierarchical clustering are based on the distance between objects, which is a <strong>continuous measure</strong>. Furthermore, each object being clustered is assigned to a single cluster.</p>
+<p>On the other hand, topic models like LDA are based on word counts, which is a <strong>discrete measure</strong>. Furthermore, each object is a mixture or partial member of every object.</p>
+</section>
+<section id="document-term-matrices" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="document-term-matrices"><span class="header-section-number">5</span> Document Term Matrices</h2>
+<p>Now that we have some intuition about what a topic model, and specifically what LDA is, we are ready to run a topic model. To do that we need to get comfortable navigating in and out of our <code>tidy_reviews</code> dataframe, starting with creating a document term matrix.</p>
+<p>A <strong>document term matrix (DTM)</strong> has a single row for each document and a column for every unique word or term across all documents in the corpus. The values in the DTM are the counts of tokens or uses of each term for the given document.</p>
+<section id="creating-a-dtm" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="creating-a-dtm"><span class="header-section-number">5.1</span> Creating a DTM</h3>
+<p>To create a DTM, we take our <code>tidy_reviews</code> dataframe and count each word in each review, indicated by the <code>rowid</code> column. We then use <code>cast_dtm()</code> function from the tidytext package to easily cast our tidy dataframe into a document term matrix. To use <code>cast_dtm()</code>, we need to specify the document column, the term column, and the word counts, in that order.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create a dtm</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>reviews_dtm <span class="ot">&lt;-</span> tidy_reviews <span class="sc">%&gt;%</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># count every word in each review message</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(word, rowid) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cast into dtm</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cast_dtm</span>(rowid, word, n)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># print dtm</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>reviews_dtm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt;&lt;DocumentTermMatrix (documents: 112900, terms: 11661)&gt;&gt;
+Non-/sparse entries: 112900/1316414000
+Sparsity           : 100%
+Maximal term length: 94
+Weighting          : term frequency (tf)</code></pre>
+</div>
+</div>
+<p>The result is list object describing the nature of our DTM. We can see that we have 112900 documents, 11661 terms and other information like <strong>Sparsity</strong>. We can convert the DTM into a matrix using the <code>as.matrix()</code> function.</p>
+<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Due to the large number of terms in the DTM, the matrix to be created is extremely large in size and R is unable to allocate it as an object in the environment</p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># format into matrix </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># reviews_dtm_matrix &lt;- as.matrix(reviews_dtm)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># subset matrix </span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># reviews_dtm_matrix[1:4, 334:339]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Our matrix is composed mostly of zeros.</p>
+<div class="callout-tip callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When a matrix is composed mostly of zeros, this is called <strong>Sparsity</strong> or a <strong>Sparse Matrix</strong>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="running-a-topic-model" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="running-a-topic-model"><span class="header-section-number">6</span> Running a Topic Model</h2>
+<p>To run a topic model, we use the <code>topicmodels</code> package together with the <code>tidyverse</code> and <code>tidytext</code>. With a DTM as input, running a topic is straightforward.</p>
+<p>We use the <code>LDA()</code> function, which requires us to supply 4 basic arguments:</p>
+<ul>
+<li><p>the DTM input</p></li>
+<li><p>k, which is the number of topics to be produced</p></li>
+<li><p>the estimation method</p></li>
+<li><p>simulation seed (as a list). Helps to recover consistent topics on repeat model runs given the probabilistic nature of the model estimation</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># model run</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>lda_output <span class="ot">&lt;-</span> <span class="fu">LDA</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># model input</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> reviews_dtm,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># no. of topics to return</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">k =</span> <span class="dv">2</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># estimation method</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"Gibbs"</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># simulation seed for reproducibility </span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">seed =</span> <span class="dv">23</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># print model</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>lda_output</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>A LDA_Gibbs topic model with 2 topics.</code></pre>
+</div>
+</div>
+<p>After running the model, which might take a few moments or even hours depending on the number of terms we throw at it, the output is, much like the DTM, an R object designed specifically for the <code>topicmodels</code> package. we can use <code>glimpse()</code> to display model output.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(lda_output)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Formal class 'LDA_Gibbs' [package "topicmodels"] with 16 slots
+  ..@ seedwords      : NULL
+  ..@ z              : int [1:112900] 2 1 2 1 1 2 2 2 2 2 ...
+  ..@ alpha          : num 25
+  ..@ call           : language LDA(x = reviews_dtm, k = 2, method = "Gibbs", control = list(seed = 23))
+  ..@ Dim            : int [1:2] 112900 11661
+  ..@ control        :Formal class 'LDA_Gibbscontrol' [package "topicmodels"] with 14 slots
+  ..@ k              : int 2
+  ..@ terms          : chr [1:11661] "___" "______" "_task" "_u" ...
+  ..@ documents      : chr [1:112900] "94029" "57860" "224" "70371" ...
+  ..@ beta           : num [1:2, 1:11661] -13.3 -10.9 -10.9 -13.3 -13.3 ...
+  ..@ gamma          : num [1:112900, 1:2] 0.49 0.51 0.49 0.51 0.51 ...
+  ..@ wordassignments:List of 5
+  .. ..$ i   : int [1:112900] 1 2 3 4 5 6 7 8 9 10 ...
+  .. ..$ j   : int [1:112900] 1 2 3 4 5 6 6 6 7 8 ...
+  .. ..$ v   : num [1:112900] 2 1 2 1 1 2 2 2 2 2 ...
+  .. ..$ nrow: int 112900
+  .. ..$ ncol: int 11661
+  .. ..- attr(*, "class")= chr "simple_triplet_matrix"
+  ..@ loglikelihood  : num -806985
+  ..@ iter           : int 2000
+  ..@ logLiks        : num(0) 
+  ..@ n              : int 112900</code></pre>
+</div>
+</div>
+<p>We can use the <code>tidy()</code> function from the tidytext package to evaluate the model in a way that is consistent with the tidyvserse framework. This function takes the matrix of the topic probabilities and put them into a form that is easily visualized using <code>ggplot2</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># remove scientific notation in results</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># tidy the topics</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>lda_topics <span class="ot">&lt;-</span> lda_output <span class="sc">%&gt;%</span> tidytext<span class="sc">::</span><span class="fu">tidy</span>(<span class="at">matrix =</span> <span class="st">"beta"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="callout-important callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Using <code>tidy()</code> requires us to specify the name and structure of the piece of <code>lda_output</code> we want to tidy.</p>
+</div>
+</div>
+<p>We can then arrange the topics in descending order of the probabilities, stored in the <code>beta</code> column.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>lda_topics <span class="sc">%&gt;%</span> </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(beta)) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="table table-sm table-striped">
+<thead>
+<tr class="header">
+<th style="text-align: right;">topic</th>
+<th style="text-align: left;">term</th>
+<th style="text-align: right;">beta</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">time</td>
+<td style="text-align: right;">0.0270616</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">tasks</td>
+<td style="text-align: right;">0.0227747</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">calendar</td>
+<td style="text-align: right;">0.0208958</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">task</td>
+<td style="text-align: right;">0.0198956</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">love</td>
+<td style="text-align: right;">0.0194793</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">day</td>
+<td style="text-align: right;">0.0177449</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">version</td>
+<td style="text-align: right;">0.0173006</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">list</td>
+<td style="text-align: right;">0.0155464</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">add</td>
+<td style="text-align: right;">0.0136185</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">premium</td>
+<td style="text-align: right;">0.0132538</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>For topic 1, the most common words include time, calendar, list, add, and premium while for topic 2, the most common words include tasks, love, and day.</p>
+<div class="callout-tip callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If <code>cast_dtm()</code> allows us to navigate out of the tidy data formats to run the topic model, <code>tidy()</code> allows us to take the model output and navigate back into a tidy data format.</p>
+</div>
+</div>
+</section>
+<section id="interpreting-topics" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="interpreting-topics"><span class="header-section-number">7</span> Interpreting Topics</h2>
+<p>Interpreting a topic model is something of an art form. Like other unsupervised learning techniques, we get a description of but not other direction as to what the topics mean.</p>
+<p>The key is to find topics that are each different where the topics don’t repeat. In the graph below, we see the top 15 occurring words with high probabilities in two topics (k= 2).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>lda_topics <span class="sc">%&gt;%</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># group data by topics</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(topic) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get top 15 words in each group by beta</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">top_n</span>(<span class="dv">15</span>, beta) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ungroup for easy mutation</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># reorder term by beta for easy visualization</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">term2 =</span> <span class="fu">fct_reorder</span>(term, beta)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bar plot faceted by topic</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(term2, beta, <span class="at">fill =</span> <span class="fu">as.factor</span>(topic)))<span class="sc">+</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">show.legend =</span> F)<span class="sc">+</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>topic, <span class="at">scales =</span> <span class="st">"free"</span>)<span class="sc">+</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>()<span class="sc">+</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Top 15 words in two topics"</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Analysis of App reviews using LDA model"</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"word"</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"probability"</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  )<span class="sc">+</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"gray90"</span>)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="text_analysis_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>In my opinion, the first topic is about apps while the second is about performance.</p>
+<div class="callout-note callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>We name the topics based on what the words with high probabilities appear to be indicating</p>
+</div>
+</div>
+<p>Written by George Ngugi</p>
 </section>
 
 </main>

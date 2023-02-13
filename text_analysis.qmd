@@ -54,7 +54,9 @@ reviews %>%
     !word == "app",
     # also remove rows with numbers
     !str_detect(word, "[0-9]")
-    ) -> 
+    ) %>% 
+  # create a review id column
+  rowid_to_column() -> 
   # assign to tidy_reviews
   tidy_reviews
 
@@ -72,3 +74,188 @@ tidy_reviews %>%
 ```
 
 ## Introduction to Topic Modeling
+
+In this section, we will move beyond word counts to uncover the underlying topics in a collection of documents. We will apply the **Latent Dirichlet Allocation (LDA)**, which is standard topic model that searches for patterns words occurring together within and across a collection of documents, also known as a corpus.
+
+LDA finds topics in a corpus by creating a separate bag for each document and dumping the words out to look for patterns in which words appear together - - not just in one bag but consistently across all the document-specific bags in the corpus.
+
+:::{.callout-note}
+
+Note that LDA is not trying to explain or predict any dependent variable, like in a regression. Rather it is simply looking for patterns within a group of explanatory variables. This pattern search is known as **Unsupervised Learning**.
+
+:::
+
+## Word Probabilities 
+
+The topics themselves are a list of all the words in a corpus, often called a dictionary, with probabilities of the words appearing within each topic.
+
+Words that appear often together will have high probabilities of occurring in one or more topics.
+
+## Topic Modeling vs Clustering
+
+Because topic modeling is a type of unsupervised learning, it naturally draws comparisons from other unsupervised techniques. In particular, topic modeling is often compared to clustering, which is common in market segmentation, and other applications. It is, therefore, worth taking a moment to distinguish between these techniques.
+
+On one hand, common clustering techniques like k-means and hierarchical clustering are based on the distance between objects, which is a **continuous measure**. Furthermore, each object being clustered is assigned to a single cluster.
+
+On the other hand, topic models like LDA are based on word counts, which is a **discrete measure**. Furthermore, each object is a mixture or partial member of every object.
+
+## Document Term Matrices
+
+Now that we have some intuition about what a topic model, and specifically what LDA is, we are ready to run a topic model. To do that we need to get comfortable navigating in and out of our `tidy_reviews` dataframe, starting with creating a document term matrix.
+
+A **document term matrix (DTM)** has a single row for each document and a column for every unique word or term across all documents in the corpus. The values in the DTM are the counts of tokens or uses of each term for the given document.
+
+### Creating a DTM
+
+To create a DTM, we take our `tidy_reviews` dataframe and count each word in each review, indicated by the `rowid` column. We then use `cast_dtm()` function from the tidytext package to easily cast our tidy dataframe into a document term matrix. To use `cast_dtm()`, we need to specify the document column, the term column, and the word counts, in that order.
+
+```{r}
+# create a dtm
+reviews_dtm <- tidy_reviews %>% 
+  # count every word in each review message
+  count(word, rowid) %>% 
+  # cast into dtm
+  cast_dtm(rowid, word, n)
+
+# print dtm
+reviews_dtm
+```
+
+The result is list object describing the nature of our DTM. We can see that we have 112900 documents, 11661 terms and other information like **Sparsity**. We can convert the DTM into a matrix using the `as.matrix()` function.
+
+:::{.callout-warning}
+
+Due to the large number of terms in the DTM, the matrix to be created is extremely large in size and R is unable to allocate it as an object in the environment
+
+:::
+
+```{r}
+# format into matrix 
+# reviews_dtm_matrix <- as.matrix(reviews_dtm)
+
+# subset matrix 
+# reviews_dtm_matrix[1:4, 334:339]
+```
+
+Our matrix is composed mostly of zeros.
+
+:::{.callout-tip}
+
+When a matrix is composed mostly of zeros, this is called **Sparsity** or a **Sparse Matrix**.
+
+:::
+
+## Running a Topic Model
+
+To run a topic model, we use the `topicmodels` package together with the `tidyverse` and `tidytext`. With a DTM as input, running a topic is straightforward.
+
+We use the `LDA()` function, which requires us to supply 4 basic arguments:
+
+-   the DTM input
+
+-   k, which is the number of topics to be produced
+
+-   the estimation method
+
+-   simulation seed (as a list). Helps to recover consistent topics on repeat model runs given the probabilistic nature of the model estimation
+
+```{r}
+# model run
+
+lda_output <- LDA(
+  # model input
+  x = reviews_dtm,
+  # no. of topics to return
+  k = 2,
+  # estimation method
+  method = "Gibbs",
+  # simulation seed for reproducibility 
+  control = list(seed = 23)
+)
+
+# print model
+lda_output
+```
+
+After running the model, which might take a few moments or even hours depending on the number of terms we throw at it, the output is, much like the DTM, an R object designed specifically for the `topicmodels` package. we can use `glimpse()` to display model output.
+
+```{r}
+glimpse(lda_output)
+```
+
+We can use the `tidy()` function from the tidytext package to evaluate the model in a way that is consistent with the tidyvserse framework. This function takes the matrix of the topic probabilities and put them into a form that is easily visualized using `ggplot2`.
+
+```{r}
+# remove scientific notation in results
+options(scipen = 999)
+
+# tidy the topics
+lda_topics <- lda_output %>% tidytext::tidy(matrix = "beta")
+```
+
+:::{.callout-important}
+
+Using `tidy()` requires us to specify the name and structure of the piece of `lda_output` we want to tidy.
+
+:::
+
+We can then arrange the topics in descending order of the probabilities, stored in the `beta` column.
+
+```{r}
+lda_topics %>% 
+  arrange(desc(beta)) %>% 
+  head(n = 10)
+```
+
+For topic 1, the most common words include time, calendar, list, add, and premium while for topic 2, the most common words include tasks, love, and day.
+
+:::{.callout-tip}
+
+If `cast_dtm()` allows us to navigate out of the tidy data formats to run the topic model, `tidy()` allows us to take the model output and navigate back into a tidy data format.
+
+:::
+
+## Interpreting Topics 
+
+Interpreting a topic model is something of an art form. Like other unsupervised learning techniques, we get a description of but not other direction as to what the topics mean.
+
+The key is to find topics that are each different where the topics don't repeat. In the graph below, we see the top 15 occurring words with high probabilities in two topics (k= 2).
+
+```{r}
+lda_topics %>% 
+  # group data by topics
+  group_by(topic) %>% 
+  # get top 15 words in each group by beta
+  top_n(15, beta) %>% 
+  # ungroup for easy mutation
+  ungroup() %>% 
+  mutate(
+    # reorder term by beta for easy visualization
+    term2 = fct_reorder(term, beta)
+  ) %>% 
+  # bar plot faceted by topic
+  ggplot(aes(term2, beta, fill = as.factor(topic)))+
+  geom_col(show.legend = F)+
+  facet_wrap(~topic, scales = "free")+
+  coord_flip()+
+  labs(
+    title = "Top 15 words in two topics",
+    subtitle = "Analysis of App reviews using LDA model",
+    x = "word",
+    y = "probability"
+  )+
+  theme_bw()+
+  theme(
+    plot.background = element_rect(fill = "gray90")
+  )
+```
+
+In my opinion, the first topic is about apps while the second is about performance.
+
+:::{.callout-note}
+
+We name the topics based on what the words with high probabilities appear to be indicating
+
+:::
+
+Written by George Ngugi
